@@ -4,98 +4,90 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Miaw 21 — Blackjack Royale</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<div id="viewport">
-  <div id="stage">
-    <div id="felt">
-      <div id="table-logo">MIAW 21<span>BLACKJACK ROYALE</span></div>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">🐾 <strong>MIAW 21</strong> <span>Blackjack Royale</span></div>
+    <div class="top-stats">
+      <div class="stat">Bankroll <b id="bankroll">1000</b></div>
+      <div class="stat">Best <b id="best">1000</b></div>
+      <div id="streak-pill" class="streak">🔥 Streak <b id="streak-count">0</b></div>
+      <div class="stat">Shoe <b id="shoe-count">0</b></div>
+    </div>
+  </header>
 
-      <div id="shoe" aria-hidden="true">
-        <div class="shoe-stack"><i></i><i></i><i></i></div>
-        <div id="shoe-count">–</div>
-        <div class="shoe-label">SHOE</div>
-      </div>
+  <main id="table">
+    <div class="felt-rules">Blackjack pays 3 : 2 &nbsp;•&nbsp; Dealer stands on all 17 &nbsp;•&nbsp; Miaw Pair 5 : 1 (suited 10 : 1)</div>
+    <div id="round-label" class="round-label">Miaw 21</div>
 
-      <div id="bet-circle" aria-hidden="true"></div>
+    <section class="hand-row dealer-row">
+      <div class="hand-label">DEALER <span id="dealer-value" class="value-badge"></span></div>
+      <div id="dealer-cards" class="cards"></div>
+    </section>
 
-      <div id="table-rule" aria-hidden="true">BLACKJACK PAYS 3 TO 2 · DEALER STANDS ON 17</div>
-
-      <div id="fx" aria-hidden="true"></div>
-
-      <div id="hud">
-        <div class="hud-item">Bankroll <b id="bankroll">1000</b></div>
-        <div class="hud-item">Bet <b id="bet-display">0</b></div>
-        <div class="hud-item">Best <b id="best">1000</b></div>
-        <div class="hud-item" id="streak-item"><b id="streak">—</b></div>
-        <div class="hud-item"><b id="record">0W – 0L – 0P</b></div>
-        <button type="button" id="mute-btn" data-action="mute" title="Toggle sound (M)">Sound: On</button>
-      </div>
-
-      <div id="dealer-area" class="hand-area">
-        <div class="hand-label">DEALER <span id="dealer-total" class="total-badge"></span></div>
-        <div id="dealer-cards" class="cards"></div>
-      </div>
-
-      <div id="message" aria-live="polite"></div>
-      <div id="result-banner" class="result-banner" role="status"></div>
-
-      <div id="player-area" class="hand-area">
-        <div class="hand-label">YOU <span id="player-total" class="total-badge"></span></div>
-        <div id="player-cards" class="cards"></div>
-      </div>
-
-      <div id="bet-spot">
-        <div id="bet-chips"></div>
-        <div id="bet-amount"></div>
-      </div>
-
-      <div id="controls"></div>
+    <div class="mid">
+      <div id="bet-circle" class="bet-circle"><span class="bet-caption">BET</span><span id="bet-amount">0</span></div>
+      <div id="message" class="message">Place your bet</div>
     </div>
 
-    <div id="title-screen" class="overlay">
-      <div class="panel">
-        <h1>MIAW 21</h1>
-        <h2>BLACKJACK ROYALE</h2>
-        <p class="tagline">Beat the dealer to 21 — without going over.</p>
-        <ul class="rules">
-          <li>Place a bet, then the dealer deals two cards each.</li>
-          <li>Hit to take a card, Stand to keep your hand. Dealer stands on all 17s.</li>
-          <li>Blackjack pays 3 to 2. Double doubles your bet for one final card.</li>
-          <li><b>Miaw Pair</b> side bet (10 chips): a pair on your first two cards pays 5 to 1, a suited pair 10 to 1.</li>
-          <li><b>Peek</b> (10 chips): reveal the dealer's hole card once per round.</li>
-        </ul>
-        <p class="best-line">Best bankroll: <b id="title-best">1000</b></p>
-        <button type="button" class="btn primary big" data-action="start">START GAME</button>
-        <p class="controls-hint">Mouse or keyboard: 1–5 chips · B repeat bet · Enter deals · H hit · S stand · D double · K peek · P pause · M mute</p>
-      </div>
-    </div>
+    <section class="hand-row player-row">
+      <div class="hand-label">YOU <span id="player-value" class="value-badge"></span></div>
+      <div id="player-cards" class="cards"></div>
+    </section>
 
-    <div id="pause-screen" class="overlay hidden">
-      <div class="panel">
-        <h1>Paused</h1>
-        <p class="tagline">The cards will wait for you.</p>
-        <button type="button" class="btn primary big" data-action="pause">RESUME</button>
-        <button type="button" class="btn big" data-action="restart">RESTART</button>
-        <button type="button" class="btn big" data-action="quit">QUIT TO TITLE</button>
+    <section class="controls">
+      <div id="chips" class="chips">
+        <button class="chip c10" data-amount="10">10</button>
+        <button class="chip c20" data-amount="20">20</button>
+        <button class="chip c50" data-amount="50">50</button>
+        <button class="chip c100" data-amount="100">100</button>
+        <button class="chip cmax" data-amount="max">MAX</button>
       </div>
-    </div>
+      <div class="actions">
+        <button id="deal-btn" class="btn primary">Deal</button>
+        <button id="hit-btn" class="btn">Hit <kbd>H</kbd></button>
+        <button id="stand-btn" class="btn">Stand <kbd>S</kbd></button>
+        <button id="double-btn" class="btn">Double <kbd>D</kbd></button>
+        <button id="peek-btn" class="btn">Peek 10 <kbd>P</kbd></button>
+        <button id="pair-btn" class="btn side">Miaw Pair (10)</button>
+        <button id="repeat-btn" class="btn">Repeat <kbd>B</kbd></button>
+        <button id="clear-btn" class="btn ghost">Clear</button>
+        <button id="next-btn" class="btn primary">Next round ⏎</button>
+      </div>
+      <div class="keys">Keys: H hit · S stand · D double · P peek · B repeat bet · Enter deal / next</div>
+    </section>
+  </main>
 
-    <div id="over-screen" class="overlay hidden">
-      <div class="panel">
-        <h1>Out of Chips</h1>
-        <p class="tagline">The house wins this time. Your luck resets with a fresh stack.</p>
-        <p id="over-stats" class="best-line"></p>
-        <button type="button" class="btn primary big" data-action="restart">PLAY AGAIN</button>
-        <button type="button" class="btn big" data-action="quit">QUIT TO TITLE</button>
-      </div>
+  <div id="title" class="overlay">
+    <div class="title-card">
+      <div class="title-cat">🐾</div>
+      <h1 class="shimmer">MIAW 21</h1>
+      <p class="subtitle">BLACKJACK ROYALE</p>
+      <p class="rules">Beat the dealer to 21. Blackjack pays 3:2, dealer stands on all 17.<br>
+      Side bet <b>Miaw Pair</b> pays when your first two cards match.<br>
+      <b>Peek</b> reveals the dealer's hole card for 10 chips.</p>
+      <button id="play-btn" class="btn primary big">▶ &nbsp;Play — 1000 chips</button>
+      <p class="title-best">Best bankroll this session: <b id="title-best">1000</b></p>
     </div>
   </div>
+
+  <div id="broke" class="overlay hidden">
+    <div class="title-card">
+      <div class="title-cat">😿</div>
+      <h1 class="shimmer">OUT OF CHIPS</h1>
+      <p class="subtitle">The house wins this time</p>
+      <button id="restart-btn" class="btn primary big">↻ &nbsp;Restart with 1000 chips</button>
+    </div>
+  </div>
+
+  <div id="float-text" class="float-text"></div>
+  <div id="flash" class="flash"></div>
+  <div id="confetti" class="confetti"></div>
+  <p id="status" role="status" aria-live="polite"></p>
 </div>
-<p id="status" role="status" aria-live="polite"></p>
-<div id="selftest" data-pass=""></div>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

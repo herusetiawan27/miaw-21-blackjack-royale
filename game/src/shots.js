@@ -1,56 +1,75 @@
-// The screenshot scenes behind ?shot=start|play|end. Each one plays the real rules forward
-// from a fresh game with a fixed seed, so the frame is what a short game really looks like
-// and the same seed always gives the same frame.
+// Deterministic screenshot scenes for ?shot=start|play|end. Each scene plays the
+// real engine forward from a fresh game with a fixed seed, so the same URL
+// always shows the same frame. The play scene is one hit into a round; the end
+// scene searches a few seeds for a round the autopilot actually wins, so the
+// frame shows a settled win instead of a loss.
 
-import { PHASE_GAMEOVER, PHASE_SETTLE } from './game.js';
-import { handValue } from './deck.js';
+import {
+  createGame,
+  deal,
+  hit,
+  placeBet,
+  stand,
+  startPlay,
+} from './engine.js';
+import { handValue } from './cards.js';
 
-/** Basic strategy: hit under 17, stand on 17 or more. Never doubles, never peeks. */
-function basicPlay(game) {
+const PLAY_BET = 50;
+
+/** Simple autopilot: hit while under 17, then stand. */
+function autopilot(game) {
   let guard = 0;
-  while (game.state.phase === 'player' && guard < 12) {
+  while (game.phase === 'player' && guard < 12) {
     guard += 1;
-    if (handValue(game.state.playerHand).total < 17) game.hit();
-    else game.stand();
+    if (handValue(game.player).total < 17) hit(game);
+    else stand(game);
   }
 }
 
+function playOneHit(game) {
+  startPlay(game);
+  placeBet(game, PLAY_BET);
+  const dealt = deal(game);
+  if (game.phase !== 'player') return false;
+  hit(game);
+  return game.phase === 'player';
+}
+
 /**
- * Set `game` to the named scene (start, play or end; any other name is start) and return the
- * screen to draw over it.
+ * Stage the named scene ('start', 'play' or 'end'; anything else is start)
+ * from `seed` and return { game, screen, best }.
  */
-export function stageShot(name, game) {
-  if (name !== 'play' && name !== 'end') {
-    game.toTitle();
-    game.demoDeal();
-    return { screen: 'title' };
-  }
-
-  game.start();
+export function stageShot(name, seed) {
   if (name === 'play') {
-    game.addChip(50);
-    game.deal();
-    // One hit at most, then stop mid-decision: the frame shows both hands, the bet and
-    // the action buttons while the player is still thinking.
-    if (game.state.phase === 'player' && handValue(game.state.playerHand).total < 17) {
-      game.hit();
+    for (let s = seed; s < seed + 60; s += 1) {
+      const game = createGame(s);
+      if (playOneHit(game)) return { game, screen: 'play', best: game.best };
     }
-    return { screen: 'play' };
+    const game = createGame(seed);
+    startPlay(game);
+    placeBet(game, PLAY_BET);
+    deal(game);
+    return { game, screen: 'play', best: game.best };
   }
-
-  // End: keep playing full rounds until one is WON, or the bankroll runs out.
-  // The dossier's last frame should be a win, not a bust.
-  for (let round = 0; round < 40; round += 1) {
-    if (game.state.phase === 'gameover') return { screen: 'over' };
-    game.addChip(50);
-    if (game.state.bet < 10) game.addChip('max');
-    game.deal();
-    basicPlay(game);
-    if (game.state.phase === PHASE_SETTLE && game.state.result && game.state.result.amount > 0) {
-      return { screen: 'play' };
+  if (name === 'end') {
+    for (let s = seed; s < seed + 200; s += 1) {
+      const game = createGame(s);
+      startPlay(game);
+      placeBet(game, PLAY_BET);
+      deal(game);
+      if (game.phase !== 'player') continue;
+      autopilot(game);
+      if (game.result === 'blackjack' || game.result === 'win') {
+        return { game, screen: 'over', best: game.best };
+      }
     }
-    if (game.state.phase === PHASE_SETTLE) game.nextRound();
-    if (game.state.phase === PHASE_GAMEOVER) return { screen: 'over' };
+    const game = createGame(seed);
+    startPlay(game);
+    placeBet(game, PLAY_BET);
+    deal(game);
+    if (game.phase === 'player') autopilot(game);
+    return { game, screen: 'over', best: game.best };
   }
-  return { screen: game.state.phase === PHASE_GAMEOVER ? 'over' : 'play' };
+  const game = createGame(seed);
+  return { game, screen: 'title', best: 0 };
 }
